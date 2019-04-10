@@ -1,0 +1,140 @@
+<html>
+<head>
+    <title>TimeTimer</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+<body>
+    <script type="text/javascript">
+        class task {
+            constructor(id, title, status) {
+                this.id = id;
+                this.title = title;
+                this.status = "todo";
+            }
+
+            fromJson = function (str) {
+                let parsed = JSON.parse(str);
+                this.id = parsed.id;
+                this.title = parsed.title;
+                this.status = parsed.status;
+                return this;
+            }
+
+            getHtml = function () {
+                return `<p>${this.id} ${this.title} ( ${this.status} ) <input type='button' value='complete' onclick='completeHandle(${this.id})' /></p>`;
+            }
+
+            complete = function () {
+                this.status = "completed";
+            }
+        }
+
+        class taskCollection {
+            constructor() {
+                this._taskCount = 0;
+                this._tasks = [];
+            }
+
+            add = function (task) {
+                this._tasks.push(task);
+                this._taskCount++;
+            }
+
+            createTask = function (title) {                
+                var t = new task(this._taskCount, title, "todo");
+                this.add(t);
+            }
+
+            count = function () {
+                return this._taskCount;
+            }
+
+            exportTasks = function () {
+                return JSON.stringify(this._tasks);
+            }
+
+            import = function (json) {
+                this.clear();
+                let jsonObject = JSON.parse(json);
+                for (var i = 0; i < jsonObject.length; i++) {
+                    let str = JSON.stringify(jsonObject[i]);
+                    let builder = new task();
+                    let t = builder.fromJson(str);
+                    console.log(t);
+                    this.add(t);
+                }
+            }
+            getHtml = function () {
+                let result = "";
+                for (let i = 0; i < this._tasks.length; i++) {
+                    result += this._tasks[i].getHtml();
+                }
+                return result;
+            }
+            getTask = function (id) {
+                let result = null;
+                for (let i = 0; i < this._tasks.length; i++) {
+                    if (this._tasks[i].id == id) {
+                        result = this._tasks[i];
+                    }
+                }
+                return result;
+            }
+            complete = function (id) {
+                let task = this.getTask(id);
+                task.complete();
+            }     
+            clear = function () {
+                this._taskCount = 0;
+                this._tasks = [];
+            }
+        }
+
+     
+        var completeHandle = null;
+        
+
+        $(document).ready(function () {
+            function render() {
+                $("#tasksCount").text(tasks.count());
+                $("#tasks").html(tasks.getHtml());
+            }
+
+            var tasks = new taskCollection;
+            completeHandle = function (id) {
+                tasks.complete(id);
+                render();
+            };
+            tasks.createTask("title1");
+            tasks.createTask("title2");
+
+            
+
+            $("#btnExport").click(function () {
+                $("#txtTasksExport").val(tasks.exportTasks());
+            });
+
+            $("#btnImport").click(function () {
+                let json = $("#txtTasksExport").val();
+                console.log("import json : " + json)
+                tasks.import(json);
+                render();
+            });
+
+            $("#btnRender").click(function () {
+                render();
+            });
+
+            render();
+        });
+    </script>
+
+    <input id="btnImport" type="button" value="import" />
+    <input id="btnExport" type="button" value="export" />
+    <input id="btnRender" type="button" value="render" />
+    <div id="tasksCount">0</div>
+    <div id="tasks">
+    </div>
+    <textarea id="txtTasksExport"></textarea>
+</body>
+</html>
