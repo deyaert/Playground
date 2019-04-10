@@ -1,0 +1,151 @@
+<html>
+<head>
+    <title>TimeTimer</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+<body>
+    <script type="text/javascript">
+        "use strict";
+
+        function _instanceof(left, right) { if (right != null && typeof Symbol !== "undefined" && right[Symbol.hasInstance]) { return right[Symbol.hasInstance](left); } else { return left instanceof right; } }
+
+        function _classCallCheck(instance, Constructor) { if (!_instanceof(instance, Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+        function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+        var task = function task(id, title, status) {
+            _classCallCheck(this, task);
+
+            _defineProperty(this, "fromJson", function (str) {
+                var parsed = JSON.parse(str);
+                this.id = parsed.id;
+                this.title = parsed.title;
+                this.status = parsed.status;
+                return this;
+            });
+
+            _defineProperty(this, "getHtml", function () {
+                return "<p>".concat(this.id, " ").concat(this.title, " ( ").concat(this.status, " ) <input type='button' value='complete' onclick='completeHandle(").concat(this.id, ")' /></p>");
+            });
+
+            _defineProperty(this, "complete", function () {
+                this.status = "completed";
+            });
+
+            this.id = id;
+            this.title = title;
+            this.status = "todo";
+        };
+
+        var taskCollection = function taskCollection() {
+            _classCallCheck(this, taskCollection);
+
+            _defineProperty(this, "add", function (task) {
+                this._tasks.push(task);
+
+                this._taskCount++;
+            });
+
+            _defineProperty(this, "createTask", function (title) {
+                var t = new task(this._taskCount, title, "todo");
+                this.add(t);
+            });
+
+            _defineProperty(this, "count", function () {
+                return this._taskCount;
+            });
+
+            _defineProperty(this, "exportTasks", function () {
+                return JSON.stringify(this._tasks);
+            });
+
+            _defineProperty(this, "import", function (json) {
+                this.clear();
+                var jsonObject = JSON.parse(json);
+
+                for (var i = 0; i < jsonObject.length; i++) {
+                    var str = JSON.stringify(jsonObject[i]);
+                    var builder = new task();
+                    var t = builder.fromJson(str);
+                    console.log(t);
+                    this.add(t);
+                }
+            });
+
+            _defineProperty(this, "getHtml", function () {
+                var result = "";
+
+                for (var i = 0; i < this._tasks.length; i++) {
+                    result += this._tasks[i].getHtml();
+                }
+
+                return result;
+            });
+
+            _defineProperty(this, "getTask", function (id) {
+                var result = null;
+
+                for (var i = 0; i < this._tasks.length; i++) {
+                    if (this._tasks[i].id == id) {
+                        result = this._tasks[i];
+                    }
+                }
+
+                return result;
+            });
+
+            _defineProperty(this, "complete", function (id) {
+                var task = this.getTask(id);
+                task.complete();
+            });
+
+            _defineProperty(this, "clear", function () {
+                this._taskCount = 0;
+                this._tasks = [];
+            });
+
+            this._taskCount = 0;
+            this._tasks = [];
+        };
+
+        var completeHandle = null;
+        $(document).ready(function () {
+            function render() {
+                $("#tasksCount").text(tasks.count());
+                $("#tasks").html(tasks.getHtml());
+            }
+
+            var tasks = new taskCollection();
+
+            completeHandle = function completeHandle(id) {
+                tasks.complete(id);
+                render();
+            };
+
+            tasks.createTask("title1");
+            tasks.createTask("title2");
+            $("#btnExport").click(function () {
+                $("#txtTasksExport").val(tasks.exportTasks());
+            });
+            $("#btnImport").click(function () {
+                var json = $("#txtTasksExport").val();
+                console.log("import json : " + json);
+                tasks.import(json);
+                render();
+            });
+            $("#btnRender").click(function () {
+                render();
+            });
+            render();
+        });
+    </script>
+
+    <input id="btnImport" type="button" value="import" />
+    <input id="btnExport" type="button" value="export" />
+    <input id="btnRender" type="button" value="render" />
+    <div id="tasksCount">0</div>
+    <div id="tasks">
+    </div>
+    <textarea id="txtTasksExport"></textarea>
+</body>
+</html>
